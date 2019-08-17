@@ -6,7 +6,6 @@
 #include <memory>
 //
 #include "Utils.h"
-#define BUFFER_SIZE 1024
 
 class TcpServer {
 public:
@@ -20,13 +19,21 @@ public:
     {
         _acceptLogic = acceptLogic;
     }
-    void setReader(std::function<void(int, const char*, size_t)> &readLogic)
+
+    void setDataProcessor(const std::function<ProcessRes(int, const char*, size_t)> &processLogic)
     {
-        _readLogic = readLogic;
+        _processLogic = processLogic;
     }
 
+    void setClose(const std::function<void(int)> &closeLogic)
+    {
+        _closeLogic = closeLogic;
+    }
+
+
 private:
-    static void acceptConnection(struct ev_loop *loop, struct ev_io *watcher, int revents);
+    static void acceptConnection(struct ev_loop *loop, struct ev_io *acceptIO, int revents);
+
     static void readData(struct ev_loop *loop, struct ev_io *watcher, int revents);
 
 private:
@@ -37,7 +44,8 @@ private:
     const int _clientBacklog = 32;
     //
     std::function<void(int)> _acceptLogic;
-    std::function<void(int, const char*, size_t)> _readLogic;
+    std::function<void(int)> _closeLogic;
+    std::function<ProcessRes(int, const char*, size_t)> _processLogic;
     //
     std::atomic<bool> _stop;
 };

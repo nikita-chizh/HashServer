@@ -8,7 +8,11 @@ link_directories(/usr/local/lib)
 set(SOURCES
     main.cpp
     TcpServer.h TcpServer.cpp
-    Utils.h Utils.cpp)
+    Utils.h Utils.cpp
+    HashProtocol.h HashProtocol.cpp)
 
 add_executable( HashServer ${SOURCES})
 target_link_libraries(HashServer ev)
+
+add_executable( test test.cpp)
+
