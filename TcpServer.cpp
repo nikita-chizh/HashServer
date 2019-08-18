@@ -13,6 +13,10 @@ TcpServer::TcpServer(const uint16_t port, const ServerLogic &logic):_loop(0),_lo
     throwIf(lessThenZero, _serverSocket, "ERROR: cannot create server Socket");
 }
 
+TcpServer::~TcpServer(){
+    ev_io_stop(_loop.loop, &_acceptIO);
+}
+
 void TcpServer::bindSocket(){
     auto err = bind(_serverSocket, reinterpret_cast<sockaddr *>(&_srvAddr), sizeof(_srvAddr));
     throwIf(notEqZero, err, "ERROR: cannot bindSocket server Socket");
@@ -31,7 +35,6 @@ void TcpServer::startServer(){
     {
         ev_loop(_loop.loop, 0);
     }
-
 }
 
 void TcpServer::acceptConnection(struct ev_loop *loop, struct ev_io *acceptIO, int revents){
@@ -81,13 +84,13 @@ void TcpServer::readData(struct ev_loop *loop, struct ev_io *clientIO, int reven
     if(readBytes == 0){
         ev_io_stop(loop, clientIO);
         server->_logic.close(clientSocket);
-        free(clientIO);
+        delete clientIO;
         return;
     }else{
         // protocol handler
         auto [status, processedData] = server->_logic.process(clientSocket, buffer, readBytes);
         if(status == PROCESS_STATUS::FULL_IN_ONE)
-            server->_logic.answer(clientSocket, buffer, readBytes);
+            server->_logic.answer(clientSocket, buffer, readBytes - 1); //without \n
         if(status == PROCESS_STATUS::FOUND_IN_MANY)
             server->_logic.answer(clientSocket, processedData.data(), processedData.size());
     }

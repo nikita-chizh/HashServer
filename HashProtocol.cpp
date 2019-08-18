@@ -29,7 +29,7 @@ ProcessRes HashProtocol::processChunck(const int clientSock, const char* buf, co
             return {PROCESS_STATUS::FULL_IN_ONE, {}};
         }else{// end of chunk was accepted
             auto curChunckEnd = targetUser->second.end();
-            targetUser->second.insert(curChunckEnd, buf, buf + size);
+            targetUser->second.insert(curChunckEnd, buf, buf + size - 1); // without \n
             return {PROCESS_STATUS::FOUND_IN_MANY, std::move(targetUser->second)};
         }
     }
@@ -39,16 +39,16 @@ ProcessRes HashProtocol::processChunck(const int clientSock, const char* buf, co
 void HashProtocol::writeAnswer(const int clientSock, const char* data, size_t size){
     auto hashRes = hash(data, size);
     writeHashRes(clientSock, hashRes);
+    closeClient(clientSock);
 }
 
 void HashProtocol::writeHashRes(const int clientSock, const std::vector<char>& hash){
-    write(clientSock, hash.data(), hash.size());
+    auto err = write(clientSock, hash.data(), hash.size());
+    logIf(lessThenZero, err, "Write to client=" + std::to_string(clientSock) + "ERROR");
 }
 
 std::vector<char> HashProtocol::hash(const char* data, const size_t size){
-    std::vector<char> res;
-    res.insert(res.end(), data, data + size);
-    return res;
+    return {};
 }
 
 

@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <errno.h>
 //
+#include <iostream>
 #include <functional>
 #include <string>
 #include <stdexcept>
@@ -39,6 +40,23 @@ inline void throwIf(  std::function<bool(int)> pridicate
 {
     throwIf(pridicate, value, errorText);
 }
+
+inline void logIf(  std::function<bool(int)> pridicate
+        , const int value
+        , std::string& errorText)
+{
+    if(pridicate(value))
+        std::cerr << errorText + ". errno: " + strerror(errno);
+
+}
+
+inline void logIf(  std::function<bool(int)> pridicate
+        , const int value
+        , std::string&& errorText)
+{
+    logIf(pridicate, value, errorText);
+}
+
 
 struct SimpleLoop
 {

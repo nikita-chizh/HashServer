@@ -14,6 +14,7 @@ private:
     std::vector<char> hash(const char* data, const size_t size);
 private:
     std::unordered_map<int, std::vector<char>> _clients;
+    //std::function<
 };
 
 

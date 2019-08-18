@@ -6,13 +6,16 @@ include_directories(/usr/local/include)
 link_directories(/usr/local/lib)
 
 set(SOURCES
-    main.cpp
+
     TcpServer.h TcpServer.cpp
     Utils.h Utils.cpp
-    HashProtocol.h HashProtocol.cpp)
+    HashProtocol.h HashProtocol.cpp
+    Config.h Config.cpp)
 
-add_executable( HashServer ${SOURCES})
-target_link_libraries(HashServer ev)
+add_library(ServerLib ${SOURCES})
+
+add_executable( HashServer main.cpp)
+target_link_libraries(HashServer ev cryptopp ServerLib)
 
 add_subdirectory(tests)
 
