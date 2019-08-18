@@ -7,6 +7,7 @@ std::string hexify(const CryptoPP::byte *digest, const size_t size){
     encoder.Attach( new CryptoPP::StringSink( res ) );
     encoder.Put( digest, sizeof(digest) );
     encoder.MessageEnd();
+    res.push_back('\n');
     return res;
 }
 
