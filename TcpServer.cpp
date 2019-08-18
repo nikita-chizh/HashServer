@@ -17,11 +17,11 @@ void TcpServer::bindSocket(){
     _srvAddr.sin_addr.s_addr = INADDR_ANY;
     //
     _serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+    throwIf(lessThenZero, _serverSocket, "ERROR: cannot create server Socket");
+    //
     int help = 1;
     auto err = setsockopt(_serverSocket, SOL_SOCKET, SO_REUSEPORT, &help, sizeof(help));
     throwIf(lessThenZero, err, "ERROR setsockopt");
-    //
-    throwIf(lessThenZero, _serverSocket, "ERROR: cannot create server Socket");
     //
     err = bind(_serverSocket, reinterpret_cast<sockaddr *>(&_srvAddr), sizeof(_srvAddr));
     throwIf(notEqZero, err, "ERROR: cannot bindSocket server Socket");

@@ -31,6 +31,9 @@ public:
 private:
     void work(){
         try{
+            _server.bindSocket();
+            _server.startListen();
+            _server.initLoop();
             while(!_stop){
                 _server.process();
             }

@@ -2,26 +2,15 @@
 #include "HashProtocol.h"
 #include "Config.h"
 #include "Worker.h"
+std::vector<Worker> workers;
 
-void worker(const Config &config)
-{
-    HashProtocol hashProtocol(config.hashFunction);
-    //
-    TcpServer::ServerLogic logic;
-    logic.accept = [&hashProtocol](int fd){hashProtocol.acceptClient(fd);};
-    logic.process = [&hashProtocol](int clientSock, const char* buf, size_t size){
-        return hashProtocol.processChunck(clientSock, buf, size);
-    };
-    logic.close = [&hashProtocol](int clientSock){hashProtocol.closeClient(clientSock);};
-    logic.answer = [&hashProtocol](const int clientSock, const char* data, size_t size){
-        hashProtocol.writeAnswer(clientSock, data, size);
-    };
-    TcpServer server(10000, logic);
-    //
-    server.bindSocket();
-    server.startListen();
+
+void sig_handler(int signo){
+    if (signo == SIGINT){
+        for(auto &worker: workers)
+            worker.stop();
+    }
 }
-
 
 int main(int argc, char *argv[])
 {
@@ -29,16 +18,20 @@ int main(int argc, char *argv[])
         if(argc < 2)
             throw std::runtime_error("Not enough arguments");
 
+        if (signal(SIGINT, sig_handler) == SIG_ERR)
+            throw std::runtime_error("Cannot set SIGINT handler");
+
         auto config = Config(std::string(argv[1]));
         auto numberOfAcceptors = config.numberOfAcceptors;
         //
         std::vector<HashProtocol> protocolHandlers;
         std::vector<TcpServer> servers;
-        std::vector<Worker> workers;
+
 
         protocolHandlers.reserve(numberOfAcceptors);
         servers.reserve(numberOfAcceptors);
         workers.reserve(numberOfAcceptors);
+        //
         for(int i=0; i < numberOfAcceptors; ++i)
             protocolHandlers.emplace_back(config.hashFunction);
 
@@ -53,17 +46,11 @@ int main(int argc, char *argv[])
                 protocolHandlers[i].writeAnswer(clientSock, data, size);
             };
             servers.emplace_back(config.port, logic);
-            // START
-            servers[i].bindSocket();
-            servers[i].startListen();
-            servers[i].initLoop();
         }
         for(int i=0; i < numberOfAcceptors; ++i){
             workers.emplace_back(servers[i]);
             workers[i].start();
         }
-
-
         return 0;
     }
     catch(const std::exception &error){
