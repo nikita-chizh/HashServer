@@ -3,12 +3,13 @@
 #include "Config.h"
 #include "Worker.h"
 std::vector<Worker> workers;
-
+std::atomic<bool> stop;
 
 void sig_handler(int signo){
     if (signo == SIGINT){
         for(auto &worker: workers)
             worker.stop();
+        stop.store(true);
     }
 }
 
@@ -20,7 +21,7 @@ int main(int argc, char *argv[])
 
         if (signal(SIGINT, sig_handler) == SIG_ERR)
             throw std::runtime_error("Cannot set SIGINT handler");
-
+        stop = false;
         auto config = Config(std::string(argv[1]));
         auto numberOfAcceptors = config.numberOfAcceptors;
         //
@@ -50,6 +51,9 @@ int main(int argc, char *argv[])
         for(int i=0; i < numberOfAcceptors; ++i){
             workers.emplace_back(servers[i]);
             workers[i].start();
+        }
+        while(!stop){
+            std::this_thread::sleep_for(std::chrono::seconds(1));
         }
         return 0;
     }
