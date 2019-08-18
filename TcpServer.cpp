@@ -1,8 +1,8 @@
-#include <iostream>
 #include "TcpServer.h"
+#include <iostream>
 const size_t CLIENT_BUF_SIZE = 1024;
 
-TcpServer::TcpServer(uint16_t port):loop(0){
+TcpServer::TcpServer(const uint16_t port, const ServerLogic &logic):_loop(0),_logic(logic) {
     _srvAddr = {};
     _srvAddr.sin_family = AF_INET;
     _srvAddr.sin_port = htons(port);
@@ -26,10 +26,10 @@ void TcpServer::startListen(){
 void TcpServer::startServer(){
     _acceptIO.data = reinterpret_cast<void*>(this);
     ev_io_init(&_acceptIO, acceptConnection, _serverSocket, EV_READ);
-    ev_io_start(loop.loop, &_acceptIO);
+    ev_io_start(_loop.loop, &_acceptIO);
     while (!_stop)
     {
-        ev_loop(loop.loop, 0);
+        ev_loop(_loop.loop, 0);
     }
 
 }
@@ -53,7 +53,7 @@ void TcpServer::acceptConnection(struct ev_loop *loop, struct ev_io *acceptIO, i
         std::cerr << "error in accept socket"<<std::endl;
         return;
     }
-    server -> _acceptLogic(clientSocket);
+    server -> _logic.accept(clientSocket);
 
     ev_io_init(clientIO, readData, clientSocket, EV_READ);
     ev_io_start(loop, clientIO);
@@ -69,7 +69,8 @@ void TcpServer::readData(struct ev_loop *loop, struct ev_io *clientIO, int reven
     char buffer[CLIENT_BUF_SIZE];
     auto *server = reinterpret_cast<TcpServer*>(clientIO->data);
 
-    ssize_t readBytes = recv(clientIO->fd, buffer, CLIENT_BUF_SIZE, 0);
+    const auto clientSocket = clientIO->fd;
+    ssize_t readBytes = recv(clientSocket, buffer, CLIENT_BUF_SIZE, 0);
 
     if(readBytes < 0)
     {
@@ -79,11 +80,16 @@ void TcpServer::readData(struct ev_loop *loop, struct ev_io *clientIO, int reven
     // client has closed connection
     if(readBytes == 0){
         ev_io_stop(loop, clientIO);
+        server->_logic.close(clientSocket);
         free(clientIO);
         return;
     }else{
         // protocol handler
-        server->_processLogic(clientIO->fd, buffer, readBytes);
+        auto [status, processedData] = server->_logic.process(clientSocket, buffer, readBytes);
+        if(status == PROCESS_STATUS::FULL_IN_ONE)
+            server->_logic.answer(clientSocket, buffer, readBytes);
+        if(status == PROCESS_STATUS::FOUND_IN_MANY)
+            server->_logic.answer(clientSocket, processedData.data(), processedData.size());
     }
     memset(buffer, 0, readBytes);
 }

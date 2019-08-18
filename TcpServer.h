@@ -2,34 +2,22 @@
 #include <cstdint>
 #include <netinet/in.h>
 //
-#include <stdexcept>
-#include <memory>
-//
 #include "Utils.h"
 
 class TcpServer {
 public:
+    struct ServerLogic{
+        std::function<void(int)> accept;
+        std::function<void(int)> close;
+        std::function<ProcessRes(const int, const char*, const size_t)> process;
+        std::function<void(const int clientSock, const char* data, size_t size)> answer;
+    };
+
     TcpServer() = delete;
-    explicit TcpServer(uint16_t port);
+    explicit TcpServer(const uint16_t port, const ServerLogic &logic);
     void bindSocket();
     void startListen();
     void startServer();
-
-    void setAcceptor(const std::function<void(int)> &acceptLogic)
-    {
-        _acceptLogic = acceptLogic;
-    }
-
-    void setDataProcessor(const std::function<ProcessRes(int, const char*, size_t)> &processLogic)
-    {
-        _processLogic = processLogic;
-    }
-
-    void setClose(const std::function<void(int)> &closeLogic)
-    {
-        _closeLogic = closeLogic;
-    }
-
 
 private:
     static void acceptConnection(struct ev_loop *loop, struct ev_io *acceptIO, int revents);
@@ -37,15 +25,12 @@ private:
     static void readData(struct ev_loop *loop, struct ev_io *watcher, int revents);
 
 private:
-    SimpleLoop loop;
+    ServerLogic _logic;
+    SimpleLoop _loop;
     sockaddr_in _srvAddr;
     int _serverSocket;
     ev_io _acceptIO;
     const int _clientBacklog = 32;
-    //
-    std::function<void(int)> _acceptLogic;
-    std::function<void(int)> _closeLogic;
-    std::function<ProcessRes(int, const char*, size_t)> _processLogic;
     //
     std::atomic<bool> _stop;
 };

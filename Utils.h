@@ -1,15 +1,20 @@
 #pragma once
 #include <netinet/in.h>
+#include <unistd.h>
 #include <errno.h>
 //
 #include <functional>
-#include <variant>
 #include <string>
+#include <stdexcept>
+#include <tuple>
+#include <unordered_map>
+#include <vector>
 //
 #include <ev.h>
 
-using ProcessData = std::variant<const char*, std::vector<char>>;
-using ProcessRes = std::pair<bool, ProcessData>;
+enum class PROCESS_STATUS{NOT_FOUND, FULL_IN_ONE, FOUND_IN_MANY};
+using ProcessRes = std::tuple<PROCESS_STATUS, std::vector<char>>;
+
 
 inline bool lessThenZero(int value){
     return value < 0;

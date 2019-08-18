@@ -5,23 +5,17 @@
 int main()
 {
     HashProtocol hashProtocol;
-    TcpServer server(PORT_NO);
     //
-    auto acceptor = [&hashProtocol](int fd){hashProtocol.acceptClient(fd);};
-    server.setAcceptor(acceptor);
-    //
-    auto processor = [&hashProtocol](int clientSock, const char* buf, size_t size){
+    TcpServer::ServerLogic logic;
+    logic.accept = [&hashProtocol](int fd){hashProtocol.acceptClient(fd);};
+    logic.process = [&hashProtocol](int clientSock, const char* buf, size_t size){
         return hashProtocol.processChunck(clientSock, buf, size);
     };
-    server.setDataProcessor(processor);
-    //
-    auto closer = [&hashProtocol](int clientSock){
-        hashProtocol.closeClient(clientSock);
+    logic.close = [&hashProtocol](int clientSock){hashProtocol.closeClient(clientSock);};
+    logic.answer = [&hashProtocol](const int clientSock, const char* data, size_t size){
+        hashProtocol.writeAnswer(clientSock, data, size);
     };
-    //
-
-    //
-    server.setClose(closer);
+    TcpServer server(PORT_NO, logic);
     //
     server.bindSocket();
     server.startListen();
