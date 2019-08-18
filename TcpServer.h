@@ -20,6 +20,7 @@ public:
     void bindSocket();
     void startListen();
     void startServer();
+    void stopServer();
 
 private:
     static void acceptConnection(struct ev_loop *loop, struct ev_io *acceptIO, int revents);
@@ -34,5 +35,5 @@ private:
     ev_io _acceptIO;
     const int _clientBacklog = 32;
     //
-    std::atomic<bool> _stop;
+    std::atomic<bool> _stop{false};
 };

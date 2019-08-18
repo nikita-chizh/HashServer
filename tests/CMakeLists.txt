@@ -7,6 +7,6 @@ link_directories(${gtest_SOURCE_DIR}/build/lib)
 
 add_executable( UNIT_TESTS test.cpp )
 # Link test executable against gtest & gtest_main
-target_link_libraries(UNIT_TESTS gtest gtest_main ServerLib)
+target_link_libraries(UNIT_TESTS gtest gtest_main ServerLib cryptopp)
 add_test(UNIT_TESTS UNIT_TESTS)
 

@@ -37,29 +37,40 @@ void TcpServer::startServer(){
     }
 }
 
+void TcpServer::stopServer(){
+    _stop.store(true);
+}
+
 void TcpServer::acceptConnection(struct ev_loop *loop, struct ev_io *acceptIO, int revents){
     if(EV_ERROR & revents)
     {
         std::cerr << "error in acceptConnection"<<std::endl;
         return;
     }
+    ev_io *clientIO = nullptr;
+    try {
+        auto *server = reinterpret_cast<TcpServer *>(acceptIO->data);
+        sockaddr_in client_addr = {};
+        socklen_t client_len = sizeof(client_addr);
+        clientIO = new ev_io;
+        clientIO->data = reinterpret_cast<void *>(server);
 
-    auto *server = reinterpret_cast<TcpServer*>(acceptIO->data);
-    sockaddr_in client_addr = {};
-    socklen_t client_len = sizeof(client_addr);
-    auto *clientIO = new ev_io;
-    clientIO -> data = reinterpret_cast<void*>(server);
+        int clientSocket = accept(acceptIO->fd, reinterpret_cast<sockaddr *>(&client_addr), &client_len);
+        if (clientSocket < 0) {
+            std::cerr << "error in accept socket" << std::endl;
+            return;
+        }
+        server->_logic.accept(clientSocket);
 
-    int clientSocket = accept(acceptIO->fd, reinterpret_cast<sockaddr*>(&client_addr), &client_len);
-    if (clientSocket < 0)
-    {
-        std::cerr << "error in accept socket"<<std::endl;
-        return;
+        ev_io_init(clientIO, readData, clientSocket, EV_READ);
+        ev_io_start(loop, clientIO);
     }
-    server -> _logic.accept(clientSocket);
-
-    ev_io_init(clientIO, readData, clientSocket, EV_READ);
-    ev_io_start(loop, clientIO);
+    catch (const std::exception &error){
+        std::cerr<<error.what();
+        delete clientIO;
+        auto *server = reinterpret_cast<TcpServer*>(acceptIO->data);
+        server->stopServer();
+    }
 }
 
 void TcpServer::readData(struct ev_loop *loop, struct ev_io *clientIO, int revents){
@@ -68,34 +79,45 @@ void TcpServer::readData(struct ev_loop *loop, struct ev_io *clientIO, int reven
         std::cerr << "error in readData"<<std::endl;
         return;
     }
+    try {
+        char buffer[CLIENT_BUF_SIZE];
+        auto *server = reinterpret_cast<TcpServer *>(clientIO->data);
 
-    char buffer[CLIENT_BUF_SIZE];
-    auto *server = reinterpret_cast<TcpServer*>(clientIO->data);
+        const auto clientSocket = clientIO->fd;
+        ssize_t readBytes = recv(clientSocket, buffer, CLIENT_BUF_SIZE, 0);
 
-    const auto clientSocket = clientIO->fd;
-    ssize_t readBytes = recv(clientSocket, buffer, CLIENT_BUF_SIZE, 0);
-
-    if(readBytes < 0)
-    {
-        std::cerr << "recv retyrned with error"<<std::endl;
-        return;
+        if (readBytes < 0) {
+            std::cerr << "recv retyrned with error" << std::endl;
+            return;
+        }
+        // client has closed connection
+        if (readBytes == 0) {
+            server->_logic.close(clientSocket);
+            ev_io_stop(loop, clientIO);
+            delete clientIO;
+            return;
+        } else {
+            // protocol handler
+            auto[status, processedData] = server->_logic.process(clientSocket, buffer, readBytes);
+            if (status == PROCESS_STATUS::FULL_IN_ONE)
+                server->_logic.answer(clientSocket, buffer, readBytes);
+            if (status == PROCESS_STATUS::FOUND_IN_MANY)
+                server->_logic.answer(clientSocket, processedData.data(), processedData.size());
+            if(status != PROCESS_STATUS::NOT_FOUND) {// answer was send and socket closed
+                ev_io_stop(loop, clientIO);
+                delete clientIO;
+                return;
+            }
+        }
+        memset(buffer, 0, readBytes);
     }
-    // client has closed connection
-    if(readBytes == 0){
-        ev_io_stop(loop, clientIO);
-        server->_logic.close(clientSocket);
-        delete clientIO;
-        return;
-    }else{
-        // protocol handler
-        auto [status, processedData] = server->_logic.process(clientSocket, buffer, readBytes);
-        if(status == PROCESS_STATUS::FULL_IN_ONE)
-            server->_logic.answer(clientSocket, buffer, readBytes - 1); //without \n
-        if(status == PROCESS_STATUS::FOUND_IN_MANY)
-            server->_logic.answer(clientSocket, processedData.data(), processedData.size());
+    catch (const std::exception &error){
+        std::cerr<<error.what();
+        auto *server = reinterpret_cast<TcpServer*>(clientIO->data);
+        server->stopServer();
     }
-    memset(buffer, 0, readBytes);
 }
+
 
 
 

@@ -9,7 +9,7 @@ int main(int argc, char *argv[])
             throw std::runtime_error("Not enough arguments");
 
         auto config = Config(std::string(argv[1]));
-        HashProtocol hashProtocol;
+        HashProtocol hashProtocol(config.hashFunction);
         //
         TcpServer::ServerLogic logic;
         logic.accept = [&hashProtocol](int fd){hashProtocol.acceptClient(fd);};

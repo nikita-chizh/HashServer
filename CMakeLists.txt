@@ -10,7 +10,8 @@ set(SOURCES
     TcpServer.h TcpServer.cpp
     Utils.h Utils.cpp
     HashProtocol.h HashProtocol.cpp
-    Config.h Config.cpp)
+    Config.h Config.cpp
+    CryptoFunctions.h CryptoFunctions.cpp)
 
 add_library(ServerLib ${SOURCES})
 
