@@ -14,26 +14,27 @@ public:
     };
 
     TcpServer() = delete;
-    ~TcpServer();
 
     explicit TcpServer(const uint16_t port, const ServerLogic &logic);
+
+    TcpServer(TcpServer &&server);
+
     void bindSocket();
     void startListen();
-    void startServer();
-    void stopServer();
-
+    void initLoop();
+    void process();
+    void stop();
 private:
     static void acceptConnection(struct ev_loop *loop, struct ev_io *acceptIO, int revents);
 
     static void readData(struct ev_loop *loop, struct ev_io *watcher, int revents);
 
 private:
+    uint16_t _port;
     ServerLogic _logic;
     SimpleLoop _loop;
     sockaddr_in _srvAddr;
     int _serverSocket;
     ev_io _acceptIO;
     const int _clientBacklog = 32;
-    //
-    std::atomic<bool> _stop{false};
 };

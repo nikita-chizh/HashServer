@@ -11,7 +11,8 @@ set(SOURCES
     Utils.h Utils.cpp
     HashProtocol.h HashProtocol.cpp
     Config.h Config.cpp
-    CryptoFunctions.h CryptoFunctions.cpp)
+    CryptoFunctions.h CryptoFunctions.cpp
+    Worker.h)
 
 add_library(ServerLib ${SOURCES})
 

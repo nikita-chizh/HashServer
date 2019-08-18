@@ -51,14 +51,6 @@ class HASH_TEST : public HashProtocol, public testing::Test
 };
 
 TEST_F(HASH_TEST, SHA256){
-    CryptoPP::SHA512 hash;
-    CryptoPP::byte digest[ CryptoPP::SHA512::DIGESTSIZE ];
-    std::string message = "abcdefghijklmnopqrstuvwxyz";
-
-    hash.CalculateDigest( digest, (CryptoPP::byte*) message.c_str(), message.length() );
-
-
-
     setCryptoFunc(SHA256);
     std::vector<char> buf = {'F', 'H','E','L','L','O',' ', '\n'};
     std::vector<char> expbuf = {'F', 'H','E','L','L','O',' '};

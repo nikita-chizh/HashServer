@@ -9,4 +9,5 @@ struct Config {
     void init(const std::string &pathToConfig);
     std::string hashFunction;
     uint16_t port;
+    uint16_t numberOfAcceptors;
 };

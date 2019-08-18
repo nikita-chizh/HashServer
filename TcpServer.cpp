@@ -2,23 +2,28 @@
 #include <iostream>
 const size_t CLIENT_BUF_SIZE = 1024;
 
-TcpServer::TcpServer(const uint16_t port, const ServerLogic &logic):_loop(0),_logic(logic) {
-    _srvAddr = {};
-    _srvAddr.sin_family = AF_INET;
-    _srvAddr.sin_port = htons(port);
-    _srvAddr.sin_addr.s_addr = INADDR_ANY;
-    //
-    _serverSocket = socket(PF_INET, SOCK_STREAM, 0);
-    //
-    throwIf(lessThenZero, _serverSocket, "ERROR: cannot create server Socket");
+TcpServer::TcpServer(const uint16_t port, const ServerLogic &logic):_port(port),_loop(0),_logic(logic) {
+
 }
 
-TcpServer::~TcpServer(){
-    ev_io_stop(_loop.loop, &_acceptIO);
+TcpServer::TcpServer(TcpServer &&server):_port(server._port),_loop(0),_logic(server._logic){
+
 }
 
 void TcpServer::bindSocket(){
-    auto err = bind(_serverSocket, reinterpret_cast<sockaddr *>(&_srvAddr), sizeof(_srvAddr));
+    _srvAddr = {};
+    _srvAddr.sin_family = AF_INET;
+    _srvAddr.sin_port = htons(_port);
+    _srvAddr.sin_addr.s_addr = INADDR_ANY;
+    //
+    _serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+    int help = 1;
+    auto err = setsockopt(_serverSocket, SOL_SOCKET, SO_REUSEPORT, &help, sizeof(help));
+    throwIf(lessThenZero, err, "ERROR setsockopt");
+    //
+    throwIf(lessThenZero, _serverSocket, "ERROR: cannot create server Socket");
+    //
+    err = bind(_serverSocket, reinterpret_cast<sockaddr *>(&_srvAddr), sizeof(_srvAddr));
     throwIf(notEqZero, err, "ERROR: cannot bindSocket server Socket");
 }
 
@@ -27,18 +32,18 @@ void TcpServer::startListen(){
     throwIf(notEqZero, err, "ERROR: cannot listen server Socket");
 }
 
-void TcpServer::startServer(){
+void TcpServer::initLoop(){
     _acceptIO.data = reinterpret_cast<void*>(this);
     ev_io_init(&_acceptIO, acceptConnection, _serverSocket, EV_READ);
     ev_io_start(_loop.loop, &_acceptIO);
-    while (!_stop)
-    {
-        ev_loop(_loop.loop, 0);
-    }
 }
 
-void TcpServer::stopServer(){
-    _stop.store(true);
+void TcpServer::process(){
+    ev_loop(_loop.loop, 0);
+}
+
+void TcpServer::stop(){
+    ev_io_stop(_loop.loop, &_acceptIO);
 }
 
 void TcpServer::acceptConnection(struct ev_loop *loop, struct ev_io *acceptIO, int revents){
@@ -67,9 +72,9 @@ void TcpServer::acceptConnection(struct ev_loop *loop, struct ev_io *acceptIO, i
     }
     catch (const std::exception &error){
         std::cerr<<error.what();
+        ev_io_stop(loop, clientIO);
         delete clientIO;
-        auto *server = reinterpret_cast<TcpServer*>(acceptIO->data);
-        server->stopServer();
+        throw;
     }
 }
 
@@ -109,12 +114,10 @@ void TcpServer::readData(struct ev_loop *loop, struct ev_io *clientIO, int reven
                 return;
             }
         }
-        memset(buffer, 0, readBytes);
     }
     catch (const std::exception &error){
         std::cerr<<error.what();
-        auto *server = reinterpret_cast<TcpServer*>(clientIO->data);
-        server->stopServer();
+        throw;
     }
 }
 

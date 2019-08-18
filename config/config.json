@@ -1,4 +1,5 @@
 {
   "port": 10000,
-  "hashFunction": "sha256"
+  "hashFunction": "sha256",
+  "numberOfAcceptors": 4
 }

@@ -23,5 +23,6 @@ void Config::init(const std::string &pathToConfig){
     auto cfg = json::parse(str);
 
     cfg.at("port").get_to(port);
+    cfg.at("numberOfAcceptors").get_to(numberOfAcceptors);
     cfg.at("hashFunction").get_to(hashFunction);
 }
