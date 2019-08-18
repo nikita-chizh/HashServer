@@ -14,5 +14,5 @@ set(SOURCES
 add_executable( HashServer ${SOURCES})
 target_link_libraries(HashServer ev)
 
-add_executable( test test.cpp)
+add_subdirectory(tests)
 
