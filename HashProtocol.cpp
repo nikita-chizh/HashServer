@@ -38,16 +38,16 @@ ProcessRes HashProtocol::processChunck(const int clientSock, const char* buf, co
     if(endPos == buf + size){ // message end is not in this chunk
         auto curChunckEnd = targetUser->second.end();
         targetUser->second.insert(curChunckEnd, buf, buf + size);
-        return {PROCESS_STATUS::NOT_FOUND, {}};
+        return ProcessRes{PROCESS_STATUS::NOT_FOUND, {}};
     }
 
     if(endPos < buf + size){// end of packet was found
         if(targetUser->second.empty()){ // if there is not any data from this user yet
-            return {PROCESS_STATUS::FULL_IN_ONE, {}};
+            return ProcessRes{PROCESS_STATUS::FULL_IN_ONE, {}};
         }else{// end of chunk was accepted
             auto curChunckEnd = targetUser->second.end();
             targetUser->second.insert(curChunckEnd, buf, buf + size);
-            return {PROCESS_STATUS::FOUND_IN_MANY, std::move(targetUser->second)};
+            return ProcessRes{PROCESS_STATUS::FOUND_IN_MANY, std::move(targetUser->second)};
         }
     }
     throw std::runtime_error("ERROR inconsistent processChunck scenario");

@@ -103,7 +103,9 @@ void TcpServer::readData(struct ev_loop *loop, struct ev_io *clientIO, int reven
             return;
         } else {
             // protocol handler
-            auto[status, processedData] = server->_logic.process(clientSocket, buffer, readBytes);
+            PROCESS_STATUS status;
+            std::vector<char> processedData;
+            std::tie(status, processedData) = server->_logic.process(clientSocket, buffer, readBytes);
             if (status == PROCESS_STATUS::FULL_IN_ONE)
                 server->_logic.answer(clientSocket, buffer, readBytes);
             if (status == PROCESS_STATUS::FOUND_IN_MANY)

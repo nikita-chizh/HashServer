@@ -3,7 +3,7 @@
 #include <thread>
 #include "Utils.h"
 #include "TcpServer.h"
-
+#include <atomic>
 class Worker {
 public:
     Worker()= delete;
@@ -46,6 +46,6 @@ private:
     }
 private:
     std::unique_ptr<std::thread> worker;
-    std::atomic<bool> _stop = false;
+    std::atomic<bool> _stop{false};
     TcpServer &_server;
 };

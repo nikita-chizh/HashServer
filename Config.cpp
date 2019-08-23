@@ -3,10 +3,10 @@
 //
 #include <fstream>
 #include <streambuf>
-#include "nlohmann/json.hpp"
+#include "rapidjson/document.h"
 #include "Config.h"
 
-using json = nlohmann::json;
+using namespace rapidjson;
 
 Config::Config(const std::string &pathToConfig){
     init(pathToConfig);
@@ -20,9 +20,10 @@ void Config::init(const std::string &pathToConfig){
     std::ifstream t(pathToConfig);
     std::string str((std::istreambuf_iterator<char>(t)),
                     std::istreambuf_iterator<char>());
-    auto cfg = json::parse(str);
 
-    cfg.at("port").get_to(port);
-    cfg.at("numberOfAcceptors").get_to(numberOfAcceptors);
-    cfg.at("hashFunction").get_to(hashFunction);
+    Document cfg;
+    cfg.Parse<0>(str.data());
+    port = cfg["port"].GetInt();
+    numberOfAcceptors = cfg["numberOfAcceptors"].GetInt();
+    hashFunction = cfg["hashFunction"].GetString();
 }

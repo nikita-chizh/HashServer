@@ -12,7 +12,9 @@ std::string hashName = "sha256";
 TEST(ProcessTesting, clientNotExist) {
     HashProtocol hashProtocol(hashName);
     try {
-        auto [status, processedData] = hashProtocol.processChunck(clientSock, buf.data(), buf.size());
+        PROCESS_STATUS status;
+        std::vector<char> processedData;
+        std::tie(status, processedData) = hashProtocol.processChunck(clientSock, buf.data(), buf.size());
     }
     catch (const std::runtime_error &error){
         ASSERT_STREQ("ERROR processChunck fd=1 doesn't exist", error.what());
@@ -22,7 +24,9 @@ TEST(ProcessTesting, clientNotExist) {
 TEST(ProcessTesting, testOnePacket) {
     HashProtocol hashProtocol(hashName);
     hashProtocol.acceptClient(clientSock);
-    auto [status, processedData] = hashProtocol.processChunck(clientSock, buf.data(), buf.size());
+    PROCESS_STATUS status;
+    std::vector<char> processedData;
+    std::tie(status, processedData) = hashProtocol.processChunck(clientSock, buf.data(), buf.size());
     ASSERT_EQ(status, PROCESS_STATUS::FULL_IN_ONE);
     ASSERT_EQ(processedData, std::vector<char>());
 }
@@ -32,11 +36,15 @@ TEST(ProcessTesting, testMultiplePackets) {
     hashProtocol.acceptClient(clientSock);
     // First message
     std::vector<char> fbuf = {'F', 'H','E','L','L','O',' '};
-    auto [status, processedData] = hashProtocol.processChunck(clientSock, fbuf.data(), fbuf.size());
+    PROCESS_STATUS status;
+    std::vector<char> processedData;
+    std::tie(status, processedData) = hashProtocol.processChunck(clientSock, fbuf.data(), fbuf.size());
     ASSERT_EQ(status, PROCESS_STATUS::NOT_FOUND);
     ASSERT_EQ(processedData, std::vector<char>());
     //
-    auto [status1, processedData1] = hashProtocol.processChunck(clientSock, buf.data(), buf.size());
+    PROCESS_STATUS status1;
+    std::vector<char> processedData1;
+    std::tie(status1, processedData1) = hashProtocol.processChunck(clientSock, buf.data(), buf.size());
     ASSERT_EQ(status1, PROCESS_STATUS::FOUND_IN_MANY);
     std::vector<char> expectedRes = {'F','H','E','L','L','O',' ',
                                      'H','E','L','L','O',' ',
