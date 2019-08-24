@@ -17,8 +17,6 @@ public:
 
     explicit TcpServer(const uint16_t port, const ServerLogic &logic);
 
-    TcpServer(TcpServer &&server);
-
     void bindSocket();
     void startListen();
     void initLoop();

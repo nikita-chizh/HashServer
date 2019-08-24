@@ -2,16 +2,12 @@
 #include <iostream>
 const size_t CLIENT_BUF_SIZE = 1024;
 
-TcpServer::TcpServer(const uint16_t port, const ServerLogic &logic):_port(port),_loop(0),_logic(logic) {
-
-}
-
-TcpServer::TcpServer(TcpServer &&server):_port(server._port),_loop(0),_logic(server._logic){
-
+TcpServer::TcpServer(const uint16_t port, const ServerLogic &logic):
+_port(port),_logic(logic), _loop(0), _srvAddr({}), _serverSocket(0), _acceptIO({}) {
 }
 
 void TcpServer::bindSocket(){
-    _srvAddr = {};
+
     _srvAddr.sin_family = AF_INET;
     _srvAddr.sin_port = htons(_port);
     _srvAddr.sin_addr.s_addr = INADDR_ANY;

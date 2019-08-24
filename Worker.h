@@ -8,11 +8,11 @@ class Worker {
 public:
     Worker()= delete;
 
-    explicit Worker(TcpServer& server):_server(server), worker(nullptr), _stop(false){}
+    explicit Worker(TcpServer& server):worker(nullptr), _stop(false), _server(server){}
 
-    Worker(Worker& worker):_server(worker._server), worker(nullptr), _stop(false){}
+    Worker(Worker& worker):worker(nullptr), _stop(false), _server(worker._server) {}
 
-    Worker(Worker&& worker):_server(worker._server), worker(nullptr), _stop(false) {}
+    Worker(Worker&& worker) noexcept :worker(nullptr), _stop(false), _server(worker._server) {}
 
     ~Worker(){
         worker->join();
