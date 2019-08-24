@@ -14,7 +14,9 @@ set(SOURCES
     HashProtocol.h HashProtocol.cpp
     Config.h Config.cpp
     CryptoFunctions.h CryptoFunctions.cpp
-    Worker.h)
+    Worker.h
+    ThreadSaveQueue.h
+    ThreadPool.h)
 
 add_library(ServerLib ${SOURCES})
 

@@ -2,13 +2,15 @@
 #include "HashProtocol.h"
 #include "Config.h"
 #include "Worker.h"
-std::vector<Worker> workers;
+#include "ThreadPool.h"
+
+std::vector<std::unique_ptr<Worker>> workers;
 std::atomic<bool> stop;
 
 void sig_handler(int signo){
     if (signo == SIGINT){
         for(auto &worker: workers)
-            worker.stop();
+            worker->stop();
         stop.store(true);
     }
 }
@@ -27,14 +29,13 @@ int main(int argc, char *argv[])
         //
         std::vector<HashProtocol> protocolHandlers;
         std::vector<TcpServer> servers;
-
+        ThreadPool threadPool(config.numberOfProcessors, stop);
 
         protocolHandlers.reserve(numberOfAcceptors);
         servers.reserve(numberOfAcceptors);
-        workers.reserve(numberOfAcceptors);
         //
         for(int i=0; i < numberOfAcceptors; ++i)
-            protocolHandlers.emplace_back(config.hashFunction);
+            protocolHandlers.emplace_back(config.hashFunction, threadPool);
 
         for(int i=0; i < numberOfAcceptors; ++i){
             TcpServer::ServerLogic logic;
@@ -43,14 +44,13 @@ int main(int argc, char *argv[])
                 return protocolHandlers[i].processChunck(clientSock, buf, size);
             };
             logic.close = [&protocolHandlers, i](int clientSock){protocolHandlers[i].closeClient(clientSock);};
-            logic.answer = [&protocolHandlers, i](const int clientSock, const char* data, size_t size){
-                protocolHandlers[i].writeAnswer(clientSock, data, size);
+            logic.answer = [&protocolHandlers, i](const int &clientSock, std::vector<char> &&data){
+                protocolHandlers[i].writeAsyncAnswer(clientSock, std::move(data));
             };
             servers.emplace_back(config.port, logic);
         }
         for(int i=0; i < numberOfAcceptors; ++i){
-            workers.emplace_back(servers[i]);
-            workers[i].start();
+            workers.push_back(std::make_unique<Worker>(servers[i], stop));
         }
         while(!stop){
             std::this_thread::sleep_for(std::chrono::seconds(1));

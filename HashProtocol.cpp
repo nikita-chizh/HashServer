@@ -1,7 +1,7 @@
 #include "HashProtocol.h"
+const size_t DEFAULT_BUFFER_SIZE = 256;
 
-
-HashProtocol::HashProtocol(const std::string &hashFunction){
+HashProtocol::HashProtocol(const std::string &hashFunction, ThreadPool &threadPoll):_threadPoll(threadPoll){
     if(hashFunction == "sha256")
         setCryptoFunc(SHA256);
     else if(hashFunction == "sha512")
@@ -14,13 +14,13 @@ void HashProtocol::setCryptoFunc(CryptoFunc cryptoFunc){
     _cryptoFunc = cryptoFunc;
 }
 
-void HashProtocol::acceptClient(const int clientSock){
+void HashProtocol::acceptClient(const int &clientSock){
     auto targetUser = _clients.find(clientSock);
     if(targetUser != _clients.end())
         throw std::runtime_error("ERROR acceptClient fd=" + std::to_string(clientSock) + " exists");
 
     std::vector<char> buf;
-    buf.reserve(256);
+    buf.reserve(DEFAULT_BUFFER_SIZE);
     _clients.insert({clientSock, std::move(buf)});
 }
 /* There can be 3 variants:
@@ -29,7 +29,7 @@ void HashProtocol::acceptClient(const int clientSock){
  * 3. testMsg doesnt have \n so we need to store it's data
  * */
 
-ProcessRes HashProtocol::processChunck(const int clientSock, const char* buf, const size_t size){
+ProcessRes HashProtocol::processChunck(const int &clientSock, const char* buf, const size_t &size){
     auto targetUser = _clients.find(clientSock);
     if(targetUser == _clients.end())
         throw std::runtime_error("ERROR processChunck fd=" + std::to_string(clientSock) + " doesn't exist");
@@ -42,35 +42,38 @@ ProcessRes HashProtocol::processChunck(const int clientSock, const char* buf, co
     }
 
     if(endPos < buf + size){// end of packet was found
-        if(targetUser->second.empty()){ // if there is not any data from this user yet
-            return ProcessRes{PROCESS_STATUS::FULL_IN_ONE, {}};
-        }else{// end of chunk was accepted
+        auto res = ProcessRes{PROCESS_STATUS::FULL_IN_ONE, {}}; // default case, when fuul msg is in buf
+
+        if(!targetUser->second.empty()){ // if there there was a data from this user
             auto curChunckEnd = targetUser->second.end();
             targetUser->second.insert(curChunckEnd, buf, buf + size);
-            return ProcessRes{PROCESS_STATUS::FOUND_IN_MANY, std::move(targetUser->second)};
+            res = ProcessRes{PROCESS_STATUS::FOUND_IN_MANY, std::move(targetUser->second)};
         }
+        _clients.erase(clientSock);
+        return res;
     }
     throw std::runtime_error("ERROR inconsistent processChunck scenario");
 }
 
-void HashProtocol::writeAnswer(const int clientSock, const char* data, size_t size){
-    auto targetUser = _clients.find(clientSock);
-    if(targetUser == _clients.end())
-        throw std::runtime_error("ERROR writeAnswer socket fd=" + std::to_string(clientSock) + " is not exist");
-
+void HashProtocol::writeAnswer(const int &clientSock, const char* data, const size_t &size){
     auto hashRes = _cryptoFunc(data, size-1);// without \n
     writeHashRes(clientSock, hashRes);
     closeClient(clientSock);
 }
 
-void HashProtocol::writeHashRes(const int clientSock, const std::string &hash){
+void HashProtocol::writeAsyncAnswer(const int &clientSock, std::vector<char> &&data){
+    auto task = [this, clientSock, data = std::move(data)](){
+        writeAnswer(clientSock, data.data(), data.size());
+    };
+    _threadPoll.addTask(std::move(task));
+}
+
+void HashProtocol::writeHashRes(const int &clientSock, const std::string &hash){
     auto err = write(clientSock, hash.data(), hash.size());
     logIf(lessThenZero, err, "ERROR writeHashRes socket fd=" + std::to_string(clientSock));
 }
 
-void HashProtocol::closeClient(const int clientSock){
+void HashProtocol::closeClient(const int &clientSock){
     auto err = close(clientSock);
-    logIf(lessThenZero, err, "ERROR on close on closeClient");
-    _clients.erase(clientSock);
-
+    logIf(lessThenZero, err, "ERROR on close in closeClient");
 }

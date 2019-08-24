@@ -2,7 +2,7 @@
 #include <iostream>
 const size_t CLIENT_BUF_SIZE = 1024;
 
-TcpServer::TcpServer(const uint16_t port, const ServerLogic &logic):
+TcpServer::TcpServer(const uint16_t &port, const ServerLogic &logic):
 _port(port),_logic(logic), _loop(0), _srvAddr({}), _serverSocket(0), _acceptIO({}) {
 }
 
@@ -102,10 +102,12 @@ void TcpServer::readData(struct ev_loop *loop, struct ev_io *clientIO, int reven
             PROCESS_STATUS status;
             std::vector<char> processedData;
             std::tie(status, processedData) = server->_logic.process(clientSocket, buffer, readBytes);
-            if (status == PROCESS_STATUS::FULL_IN_ONE)
-                server->_logic.answer(clientSocket, buffer, readBytes);
+            if (status == PROCESS_STATUS::FULL_IN_ONE){
+                std::vector<char> data(buffer,buffer+readBytes);
+                server->_logic.answer(clientSocket, std::move(data));
+            }
             else if (status == PROCESS_STATUS::FOUND_IN_MANY)
-                server->_logic.answer(clientSocket, processedData.data(), processedData.size());
+                server->_logic.answer(clientSocket, std::move(processedData));
             if(status != PROCESS_STATUS::NOT_FOUND) {// answer was send and socket was closed
                 ev_io_stop(loop, clientIO);
                 delete clientIO;

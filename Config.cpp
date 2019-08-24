@@ -25,5 +25,6 @@ void Config::init(const std::string &pathToConfig){
     cfg.Parse<0>(str.data());
     port = cfg["port"].GetInt();
     numberOfAcceptors = cfg["numberOfAcceptors"].GetInt();
+    numberOfProcessors = cfg["numberOfProcessors"].GetInt();
     hashFunction = cfg["hashFunction"].GetString();
 }

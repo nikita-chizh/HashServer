@@ -10,12 +10,12 @@ public:
         std::function<void(int)> accept;
         std::function<void(int)> close;
         std::function<ProcessRes(const int, const char*, const size_t)> process;
-        std::function<void(const int clientSock, const char* data, size_t size)> answer;
+        std::function<void(const int &clientSock, std::vector<char> &&data)> answer;
     };
 
     TcpServer() = delete;
 
-    explicit TcpServer(const uint16_t port, const ServerLogic &logic);
+    explicit TcpServer(const uint16_t &port, const ServerLogic &logic);
 
     void bindSocket();
     void startListen();

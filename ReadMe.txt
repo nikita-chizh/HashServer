@@ -13,7 +13,7 @@ Chizhikov Nikita's libev-based hash-server
 3. Config Params
     1. port: listening port
     2. hashFunction: (only sha256 and sha512 are supported).
-    3. numberOfAcceptors: (number of worker threads).
+    3. numberOfAcceptors: (number of worker _threads).
 
 4. TODOS
     1. Caching (HashServer should be able to cache already computated hashes).
