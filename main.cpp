@@ -9,8 +9,6 @@ std::atomic<bool> stop;
 
 void sig_handler(int signo){
     if (signo == SIGINT){
-        for(auto &worker: workers)
-            worker->stop();
         stop.store(true);
     }
 }
@@ -55,6 +53,7 @@ int main(int argc, char *argv[])
         while(!stop){
             std::this_thread::sleep_for(std::chrono::seconds(1));
         }
+        std::cout<<"SERVER IS STOPPING"<<std::endl;
         return 0;
     }
     catch(const std::exception &error){

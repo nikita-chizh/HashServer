@@ -6,6 +6,13 @@ TcpServer::TcpServer(const uint16_t &port, const ServerLogic &logic):
 _port(port),_logic(logic), _loop(0), _srvAddr({}), _serverSocket(0), _acceptIO({}) {
 }
 
+TcpServer::~TcpServer(){
+
+    ev_io_stop(_loop.loop, &_acceptIO);
+    ev_break(_loop.loop);
+}
+
+
 void TcpServer::bindSocket(){
 
     _srvAddr.sin_family = AF_INET;
@@ -39,7 +46,6 @@ void TcpServer::process(){
 }
 
 void TcpServer::stop(){
-    ev_io_stop(_loop.loop, &_acceptIO);
 }
 
 void TcpServer::acceptConnection(struct ev_loop *loop, struct ev_io *acceptIO, int revents){

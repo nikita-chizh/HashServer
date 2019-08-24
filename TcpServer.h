@@ -15,6 +15,8 @@ public:
 
     TcpServer() = delete;
 
+    ~TcpServer();
+
     explicit TcpServer(const uint16_t &port, const ServerLogic &logic);
 
     void bindSocket();
