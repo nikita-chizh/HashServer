@@ -24,9 +24,9 @@ void HashProtocol::acceptClient(const int clientSock){
     _clients.insert({clientSock, std::move(buf)});
 }
 /* There can be 3 variants:
- * 1. buf comprises full string to hash
- * 2. buf with already accumulated data make up a full string
- * 3. buf doesnt have \n so we need to store it's data
+ * 1. testMsg comprises full string to hash
+ * 2. testMsg with already accumulated data make up a full string
+ * 3. testMsg doesnt have \n so we need to store it's data
  * */
 
 ProcessRes HashProtocol::processChunck(const int clientSock, const char* buf, const size_t size){

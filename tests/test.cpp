@@ -3,9 +3,9 @@
 #include "../HashProtocol.h"
 
 const int clientSock = 1;
-std::vector<char> buf = {'H','E','L','L','O',' ',
-                         'T','C','P',' ',
-                         'S','E','R','V','E','R', '\n'};
+std::vector<char> testMsg = {'H', 'E', 'L', 'L', 'O', ' ',
+                             'T', 'C', 'P', ' ',
+                             'S', 'E', 'R', 'V', 'E', 'R', '\n'};
 
 std::string hashName = "sha256";
 
@@ -14,7 +14,7 @@ TEST(ProcessTesting, clientNotExist) {
     try {
         PROCESS_STATUS status;
         std::vector<char> processedData;
-        std::tie(status, processedData) = hashProtocol.processChunck(clientSock, buf.data(), buf.size());
+        std::tie(status, processedData) = hashProtocol.processChunck(clientSock, testMsg.data(), testMsg.size());
     }
     catch (const std::runtime_error &error){
         ASSERT_STREQ("ERROR processChunck fd=1 doesn't exist", error.what());
@@ -26,7 +26,7 @@ TEST(ProcessTesting, testOnePacket) {
     hashProtocol.acceptClient(clientSock);
     PROCESS_STATUS status;
     std::vector<char> processedData;
-    std::tie(status, processedData) = hashProtocol.processChunck(clientSock, buf.data(), buf.size());
+    std::tie(status, processedData) = hashProtocol.processChunck(clientSock, testMsg.data(), testMsg.size());
     ASSERT_EQ(status, PROCESS_STATUS::FULL_IN_ONE);
     ASSERT_EQ(processedData, std::vector<char>());
 }
@@ -35,22 +35,20 @@ TEST(ProcessTesting, testMultiplePackets) {
     HashProtocol hashProtocol(hashName);
     hashProtocol.acceptClient(clientSock);
     // First message
-    std::vector<char> fbuf = {'F', 'H','E','L','L','O',' '};
+    std::vector<char> firstMsg = {'F', 'H', 'E', 'L', 'L', 'O', ' '};
     PROCESS_STATUS status;
     std::vector<char> processedData;
-    std::tie(status, processedData) = hashProtocol.processChunck(clientSock, fbuf.data(), fbuf.size());
+    std::tie(status, processedData) = hashProtocol.processChunck(clientSock, firstMsg.data(), firstMsg.size());
     ASSERT_EQ(status, PROCESS_STATUS::NOT_FOUND);
     ASSERT_EQ(processedData, std::vector<char>());
     //
-    PROCESS_STATUS status1;
-    std::vector<char> processedData1;
-    std::tie(status1, processedData1) = hashProtocol.processChunck(clientSock, buf.data(), buf.size());
-    ASSERT_EQ(status1, PROCESS_STATUS::FOUND_IN_MANY);
+    std::tie(status, processedData) = hashProtocol.processChunck(clientSock, testMsg.data(), testMsg.size());
+    ASSERT_EQ(status, PROCESS_STATUS::FOUND_IN_MANY);
     std::vector<char> expectedRes = {'F','H','E','L','L','O',' ',
                                      'H','E','L','L','O',' ',
                                      'T','C','P',' ',
                                      'S','E','R','V','E','R', '\n'};
-    ASSERT_EQ(processedData1, expectedRes);
+    ASSERT_EQ(processedData, expectedRes);
 }
 
 class HASH_TEST : public HashProtocol, public testing::Test
@@ -69,3 +67,13 @@ TEST_F(HASH_TEST, SHA256){
     ASSERT_EQ(res, expect);
 }
 
+TEST_F(HASH_TEST, SHA512){
+    setCryptoFunc(SHA512);
+    std::vector<char> buf = {'F', 'H','E','L','L','O',' ', '\n'};
+    std::vector<char> expbuf = {'F', 'H','E','L','L','O',' '};
+    auto res = _cryptoFunc(buf.data(), buf.size() - 1);
+    auto expect = SHA512(expbuf.data(), expbuf.size());
+    ASSERT_NE(expect.size(), 0);
+    ASSERT_NE(res.size(), 0);
+    ASSERT_EQ(res, expect);
+}
