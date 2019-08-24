@@ -8,9 +8,11 @@ std::vector<char> testMsg = {'H', 'E', 'L', 'L', 'O', ' ',
                              'S', 'E', 'R', 'V', 'E', 'R', '\n'};
 
 std::string hashName = "sha256";
+std::atomic<bool> stop {false};
+ThreadPool threadPool(0, stop);
 
 TEST(ProcessTesting, clientNotExist) {
-    HashProtocol hashProtocol(hashName);
+    HashProtocol hashProtocol(hashName, threadPool);
     try {
         PROCESS_STATUS status;
         std::vector<char> processedData;
@@ -22,7 +24,7 @@ TEST(ProcessTesting, clientNotExist) {
 }
 
 TEST(ProcessTesting, testOnePacket) {
-    HashProtocol hashProtocol(hashName);
+    HashProtocol hashProtocol(hashName, threadPool);
     hashProtocol.acceptClient(clientSock);
     PROCESS_STATUS status;
     std::vector<char> processedData;
@@ -32,7 +34,7 @@ TEST(ProcessTesting, testOnePacket) {
 }
 
 TEST(ProcessTesting, testMultiplePackets) {
-    HashProtocol hashProtocol(hashName);
+    HashProtocol hashProtocol(hashName, threadPool);
     hashProtocol.acceptClient(clientSock);
     // First message
     std::vector<char> firstMsg = {'F', 'H', 'E', 'L', 'L', 'O', ' '};
@@ -51,9 +53,10 @@ TEST(ProcessTesting, testMultiplePackets) {
     ASSERT_EQ(processedData, expectedRes);
 }
 
-class HASH_TEST : public HashProtocol, public testing::Test
+class HASH_TEST :public HashProtocol, public testing::Test
 {
-
+public:
+    HASH_TEST():HashProtocol(hashName, threadPool), testing::Test(){}
 };
 
 TEST_F(HASH_TEST, SHA256){

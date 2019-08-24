@@ -7,7 +7,6 @@ _port(port),_logic(logic), _loop(0), _srvAddr({}), _serverSocket(0), _acceptIO({
 }
 
 TcpServer::~TcpServer(){
-
     ev_io_stop(_loop.loop, &_acceptIO);
     ev_break(_loop.loop);
 }
