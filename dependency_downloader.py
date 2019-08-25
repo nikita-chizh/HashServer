@@ -1,10 +1,11 @@
 import os
 update = 'apt-get update'
+upgrade = 'apt-get upgrade'
 libev = 'apt-get install libev-dev'
-libcrypt = 'apt-get install libcrypto++8 libcrypto++8-dbg libcrypto++-dev'
+libcrypt = 'sudo apt-get install libcrypto++-dev'
 json_lib = 'apt install rapidjson-dev'
 
-cmd_list = [update, libev, libcrypt, json_lib]
+cmd_list = [update, upgrade, libev, libcrypt, json_lib]
 try:
     for cmd in cmd_list:
         os.system(cmd)
