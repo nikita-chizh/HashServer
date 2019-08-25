@@ -27,7 +27,7 @@ TEST(ProcessTesting, testOnePacket) {
     auto onePack = testMsg;
     onePack.push_back('\n');
     auto res = hashProtocol.processChunk(clientSock, onePack.data(), onePack.size());
-    ASSERT_EQ(res, testMsg);
+    ASSERT_EQ(res, onePack);
 }
 
 TEST(ProcessTesting, testOnePacketInAMiddle) {
@@ -35,7 +35,7 @@ TEST(ProcessTesting, testOnePacketInAMiddle) {
     hashProtocol.acceptClient(clientSock);
     auto onePack = testMsg;
     onePack[5] = '\n';
-    std::vector<char> expected = {'H', 'E', 'L', 'L', 'O'};
+    std::vector<char> expected = {'H', 'E', 'L', 'L', 'O', '\n'};
     auto res = hashProtocol.processChunk(clientSock, onePack.data(), onePack.size());
     ASSERT_EQ(res, expected);
 }
@@ -55,7 +55,7 @@ TEST(ProcessTesting, testMultiplePackets) {
     std::vector<char> expectedRes = {'F','H','E','L','L','O',' ',
                                      'H','E','L','L','O',' ',
                                      'T','C','P',' ',
-                                     'S','E','R','V','E','R'};
+                                     'S','E','R','V','E','R', '\n'};
     ASSERT_EQ(res, expectedRes);
 }
 //

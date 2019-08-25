@@ -30,22 +30,22 @@ std::vector<char> HashProtocol::processChunk(const int &clientSock, const char* 
 
     std::vector<char> res = {};
     for(size_t i = 0; i < size; ++i){
-        if(buf[i] == '\n'){// result chunk without \n
+        targetUser->second.push_back(buf[i]);
+        if(buf[i] == '\n'){
             res = std::move(targetUser->second);
             _clients.erase(clientSock);
             return res;
         }
-        targetUser->second.push_back(buf[i]);
     }
     return res;
 }
 
 void HashProtocol::writeAnswer(const int &clientSock, const char* data, const size_t &size){
     std::string hashRes = {};
-    if(size == 0)
+    if(size == 1)
         hashRes = "\n";
     else
-        hashRes = _cryptoFunc(data, size);
+        hashRes = _cryptoFunc(data, size-1);//result without \n
     writeHashRes(clientSock, hashRes);
     sockClose(clientSock);
 }
