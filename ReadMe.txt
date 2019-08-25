@@ -2,16 +2,18 @@ Chizhikov Nikita's libev-based hash-server
 
 Build:
 To build you need:
-1. GCC version 8.3 (C++17 support)
+1. GCC version 8.3 (C++17 support) 
+sudo python3 GCC.py
 2. cmake version > 3.8 (C++17 support)
+sudo python3 Cmake.py
 3. python3
 
 Dependencies:
 1. libev, libcrypto++, rapidjson, gtest
+sudo python3 dependency_downloader.py
 
 Build order:
-1. python3 dependency_downloader.py
-2. bash build.sh
+1. bash build.sh
 
 Start:
 cd tests && bash startServer.sh (starts server)
