@@ -54,7 +54,11 @@ ProcessRes HashProtocol::processChunk(const int &clientSock, const char* buf, co
 }
 
 void HashProtocol::writeAnswer(const int &clientSock, const char* data, const size_t &size){
-    auto hashRes = _cryptoFunc(data, size-1);// without \n
+    std::string hashRes = {};
+    if(size == 1)
+        hashRes = "\n";
+    else
+        hashRes = _cryptoFunc(data, size-1);// without \n
     writeHashRes(clientSock, hashRes);
     sockClose(clientSock);
 }
