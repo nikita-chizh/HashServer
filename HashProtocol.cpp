@@ -78,5 +78,5 @@ void HashProtocol::closeClient(const int &clientSock){
 
 void HashProtocol::sockClose(const int &clientSock){
     auto err = close(clientSock);
-    logIf(lessThenZero, err, "ERROR on close in closeClient");
+    logIf(lessThenZero, err, "ERROR sockClose socket fd="+ std::to_string(clientSock));
 }

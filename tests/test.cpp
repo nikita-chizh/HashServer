@@ -68,7 +68,6 @@ TEST_F(HASH_TEST, SHA256){
     ASSERT_NE(expect.size(), 0);
     ASSERT_NE(res.size(), 0);
     ASSERT_EQ(res, expect);
-    std::cout<<res;
 }
 
 TEST_F(HASH_TEST, SHA512){

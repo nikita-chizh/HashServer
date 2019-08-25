@@ -44,9 +44,6 @@ void TcpServer::process(){
     ev_loop(_loop.loop, 0);
 }
 
-void TcpServer::stop(){
-}
-
 void TcpServer::acceptConnection(struct ev_loop *loop, struct ev_io *acceptIO, int revents){
     if(EV_ERROR & revents)
     {

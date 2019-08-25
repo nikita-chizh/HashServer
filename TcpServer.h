@@ -23,7 +23,6 @@ public:
     void startListen();
     void initLoop();
     void process();
-    void stop();
 private:
     static void acceptConnection(struct ev_loop *loop, struct ev_io *acceptIO, int revents);
 
