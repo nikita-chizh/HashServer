@@ -16,6 +16,7 @@ protected:
 private:
     void writeAnswer(const int &clientSock, const char* data, const size_t &size);
     static void writeHashRes(const int &clientSock, const std::string &hash);
+    static void sockClose(const int &clientSock);
 private:
     std::unordered_map<int, std::vector<char>> _clients;
     ThreadPool &_threadPoll;

@@ -18,7 +18,6 @@ void HashProtocol::acceptClient(const int &clientSock){
     auto targetUser = _clients.find(clientSock);
     if(targetUser != _clients.end())
         throw std::runtime_error("ERROR acceptClient fd=" + std::to_string(clientSock) + " exists");
-
     std::vector<char> buf;
     buf.reserve(DEFAULT_BUFFER_SIZE);
     _clients.insert({clientSock, std::move(buf)});
@@ -33,7 +32,6 @@ ProcessRes HashProtocol::processChunck(const int &clientSock, const char* buf, c
     auto targetUser = _clients.find(clientSock);
     if(targetUser == _clients.end())
         throw std::runtime_error("ERROR processChunck fd=" + std::to_string(clientSock) + " doesn't exist");
-
     auto endPos = std::find(buf, buf + size, '\n');
     if(endPos == buf + size){ // message end is not in this chunk
         auto curChunckEnd = targetUser->second.end();
@@ -58,7 +56,7 @@ ProcessRes HashProtocol::processChunck(const int &clientSock, const char* buf, c
 void HashProtocol::writeAnswer(const int &clientSock, const char* data, const size_t &size){
     auto hashRes = _cryptoFunc(data, size-1);// without \n
     writeHashRes(clientSock, hashRes);
-    closeClient(clientSock);
+    sockClose(clientSock);
 }
 
 void HashProtocol::writeAsyncAnswer(const int &clientSock, std::vector<char> &&data){
@@ -74,6 +72,11 @@ void HashProtocol::writeHashRes(const int &clientSock, const std::string &hash){
 }
 
 void HashProtocol::closeClient(const int &clientSock){
+    _clients.erase(clientSock);
+    sockClose(clientSock);
+}
+
+void HashProtocol::sockClose(const int &clientSock){
     auto err = close(clientSock);
     logIf(lessThenZero, err, "ERROR on close in closeClient");
 }
