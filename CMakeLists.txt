@@ -10,18 +10,18 @@ link_directories(/usr/lib)
 
 
 set(SOURCES
-    TcpServer.h TcpServer.cpp
-    Utils.h Utils.cpp
-    HashProtocol.h HashProtocol.cpp
-    Config.h Config.cpp
-    CryptoFunctions.h CryptoFunctions.cpp
-    Worker.h
-    ThreadSaveQueue.h
-    ThreadPool.h)
+    src/TcpServer.h src/TcpServer.cpp
+    src/Utils.h src/Utils.cpp
+    src/HashProtocol.h src/HashProtocol.cpp
+    src/Config.h src/Config.cpp
+    src/CryptoFunctions.h src/CryptoFunctions.cpp
+    src/Worker.h
+    src/ThreadSaveQueue.h
+    src/ThreadPool.h)
 
 add_library(ServerLib ${SOURCES})
 
-add_executable( HashServer main.cpp)
+add_executable( HashServer src/main.cpp)
 target_link_libraries(HashServer ServerLib ev cryptopp pthread)
 
 add_subdirectory(tests)

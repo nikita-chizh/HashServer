@@ -1,6 +1,6 @@
 #include <vector>
 #include <gtest/gtest.h> // googletest header file
-#include "../HashProtocol.h"
+#include "../src/HashProtocol.h"
 
 const int clientSock = 1;
 std::vector<char> testMsg = {'H', 'E', 'L', 'L', 'O', ' ',
