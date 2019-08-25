@@ -1,20 +1,25 @@
 Chizhikov Nikita's libev-based hash-server
 
-1. Dependencies:
-    1. libev (brew install libev / apt-get install libev)
-    2. nlohmann-json (brew install nlohmann-json / apt-get install nlohmann-json)
-    3. cryptopp (brew install cryptopp / apt-get install cryptopp)
-    4. gtest
+Build:
+To build you need:
+1. GCC version 8.3 (C++17 support)
+2. cmake version > 3.8 (C++17 support)
+3. python3
 
-2. How to start:
-    1. HashServer <path_to_config>
-    2. cd tests && bash test.sh
+Dependencies:
+1. libev, libcrypto++, rapidjson, gtest
 
-3. Config Params
-    1. port: listening port
-    2. hashFunction: (only sha256 and sha512 are supported).
-    3. numberOfAcceptors: (number of worker _threads).
+Build order:
+1. python3 dependency_downloader.py
+2. bash build.sh
 
-4. TODOS
-    1. Caching (HashServer should be able to cache already computated hashes).
-    2. Thread pull for async hash computation.
+Start:
+cd tests && bash startServer.sh (starts server)
+bash test.sh (starts multiple instances of TestHashServer.py)
+
+Config Params:
+1. port: listening port
+2. hashFunction: (only sha256 and sha512 are supported).
+3. numberOfAcceptors: (number of worker _threads).
+4. numberOfProcessors: (number of threads in ThreadPool).
+
