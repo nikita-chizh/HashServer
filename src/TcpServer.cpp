@@ -107,7 +107,6 @@ void TcpServer::readData(struct ev_loop *loop, struct ev_io *clientIO, int reven
                 // answer was send and socket was closed
                 ev_io_stop(loop, clientIO);
                 delete clientIO;
-                return;
             }
         }
     }
