@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
             TcpServer::ServerLogic logic;
             logic.accept = [&protocolHandlers, i](int fd){protocolHandlers[i].acceptClient(fd);};
             logic.process = [&protocolHandlers, i](int clientSock, const char* buf, size_t size){
-                return protocolHandlers[i].processChunck(clientSock, buf, size);
+                return protocolHandlers[i].processChunk(clientSock, buf, size);
             };
             logic.close = [&protocolHandlers, i](int clientSock){protocolHandlers[i].closeClient(clientSock);};
             logic.answer = [&protocolHandlers, i](const int &clientSock, std::vector<char> &&data){

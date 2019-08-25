@@ -28,14 +28,14 @@ void HashProtocol::acceptClient(const int &clientSock){
  * 3. testMsg doesnt have \n so we need to store it's data
  * */
 
-ProcessRes HashProtocol::processChunck(const int &clientSock, const char* buf, const size_t &size){
+ProcessRes HashProtocol::processChunk(const int &clientSock, const char* buf, const size_t &size){
     auto targetUser = _clients.find(clientSock);
     if(targetUser == _clients.end())
-        throw std::runtime_error("ERROR processChunck fd=" + std::to_string(clientSock) + " doesn't exist");
+        throw std::runtime_error("ERROR processChunk fd=" + std::to_string(clientSock) + " doesn't exist");
     auto endPos = std::find(buf, buf + size, '\n');
     if(endPos == buf + size){ // message end is not in this chunk
-        auto curChunckEnd = targetUser->second.end();
-        targetUser->second.insert(curChunckEnd, buf, buf + size);
+        auto curChunkEnd = targetUser->second.end();
+        targetUser->second.insert(curChunkEnd, buf, buf + size);
         return ProcessRes{PROCESS_STATUS::NOT_FOUND, {}};
     }
 
@@ -43,14 +43,14 @@ ProcessRes HashProtocol::processChunck(const int &clientSock, const char* buf, c
         auto res = ProcessRes{PROCESS_STATUS::FULL_IN_ONE, {}}; // default case, when fuul msg is in buf
 
         if(!targetUser->second.empty()){ // if there there was a data from this user
-            auto curChunckEnd = targetUser->second.end();
-            targetUser->second.insert(curChunckEnd, buf, buf + size);
+            auto curChunkEnd = targetUser->second.end();
+            targetUser->second.insert(curChunkEnd, buf, buf + size);
             res = ProcessRes{PROCESS_STATUS::FOUND_IN_MANY, std::move(targetUser->second)};
         }
         _clients.erase(clientSock);
         return res;
     }
-    throw std::runtime_error("ERROR inconsistent processChunck scenario");
+    throw std::runtime_error("ERROR inconsistent processChunk scenario");
 }
 
 void HashProtocol::writeAnswer(const int &clientSock, const char* data, const size_t &size){

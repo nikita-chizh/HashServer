@@ -7,7 +7,7 @@ public:
     explicit HashProtocol(const std::string &hashFunction, ThreadPool &threadPoll);
 
     void acceptClient(const int &clientSock);
-    ProcessRes processChunck(const int &clientSock, const char* buf, const size_t &size);
+    ProcessRes processChunk(const int &clientSock, const char* buf, const size_t &size);
     void writeAsyncAnswer(const int &clientSock, std::vector<char> &&data);
     void closeClient(const int &clientSock);
 protected:

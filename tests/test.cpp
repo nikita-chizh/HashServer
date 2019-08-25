@@ -16,10 +16,10 @@ TEST(ProcessTesting, clientNotExist) {
     try {
         PROCESS_STATUS status;
         std::vector<char> processedData;
-        std::tie(status, processedData) = hashProtocol.processChunck(clientSock, testMsg.data(), testMsg.size());
+        std::tie(status, processedData) = hashProtocol.processChunk(clientSock, testMsg.data(), testMsg.size());
     }
     catch (const std::runtime_error &error){
-        ASSERT_STREQ("ERROR processChunck fd=1 doesn't exist", error.what());
+        ASSERT_STREQ("ERROR processChunk fd=1 doesn't exist", error.what());
     }
 }
 
@@ -28,7 +28,7 @@ TEST(ProcessTesting, testOnePacket) {
     hashProtocol.acceptClient(clientSock);
     PROCESS_STATUS status;
     std::vector<char> processedData;
-    std::tie(status, processedData) = hashProtocol.processChunck(clientSock, testMsg.data(), testMsg.size());
+    std::tie(status, processedData) = hashProtocol.processChunk(clientSock, testMsg.data(), testMsg.size());
     ASSERT_EQ(status, PROCESS_STATUS::FULL_IN_ONE);
     ASSERT_EQ(processedData, std::vector<char>());
 }
@@ -40,11 +40,11 @@ TEST(ProcessTesting, testMultiplePackets) {
     std::vector<char> firstMsg = {'F', 'H', 'E', 'L', 'L', 'O', ' '};
     PROCESS_STATUS status;
     std::vector<char> processedData;
-    std::tie(status, processedData) = hashProtocol.processChunck(clientSock, firstMsg.data(), firstMsg.size());
+    std::tie(status, processedData) = hashProtocol.processChunk(clientSock, firstMsg.data(), firstMsg.size());
     ASSERT_EQ(status, PROCESS_STATUS::NOT_FOUND);
     ASSERT_EQ(processedData, std::vector<char>());
     //
-    std::tie(status, processedData) = hashProtocol.processChunck(clientSock, testMsg.data(), testMsg.size());
+    std::tie(status, processedData) = hashProtocol.processChunk(clientSock, testMsg.data(), testMsg.size());
     ASSERT_EQ(status, PROCESS_STATUS::FOUND_IN_MANY);
     std::vector<char> expectedRes = {'F','H','E','L','L','O',' ',
                                      'H','E','L','L','O',' ',
