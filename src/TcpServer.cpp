@@ -101,16 +101,10 @@ void TcpServer::readData(struct ev_loop *loop, struct ev_io *clientIO, int reven
             return;
         } else {
             // protocol handler
-            PROCESS_STATUS status;
-            std::vector<char> processedData;
-            std::tie(status, processedData) = server->_logic.process(clientSocket, buffer, readBytes);
-            if (status == PROCESS_STATUS::FULL_IN_ONE){
-                std::vector<char> data(buffer,buffer+readBytes);
-                server->_logic.answer(clientSocket, std::move(data));
-            }
-            else if (status == PROCESS_STATUS::FOUND_IN_MANY)
+            auto processedData = server->_logic.process(clientSocket, buffer, readBytes);
+            if (!processedData.empty()){
                 server->_logic.answer(clientSocket, std::move(processedData));
-            if(status != PROCESS_STATUS::NOT_FOUND) {// answer was send and socket was closed
+                // answer was send and socket was closed
                 ev_io_stop(loop, clientIO);
                 delete clientIO;
                 return;

@@ -9,7 +9,7 @@ public:
     struct ServerLogic{
         std::function<void(int)> accept;
         std::function<void(int)> close;
-        std::function<ProcessRes(const int, const char*, const size_t)> process;
+        std::function<std::vector<char>(const int, const char*, const size_t)> process;
         std::function<void(const int &clientSock, std::vector<char> &&data)> answer;
     };
 
