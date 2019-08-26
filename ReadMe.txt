@@ -1,3 +1,4 @@
+
 Chizhikov Nikita's libev-based hash-server
 
 Build:
@@ -25,3 +26,13 @@ Config Params:
 3. numberOfAcceptors: (number of worker _threads).
 4. numberOfProcessors: (number of threads in ThreadPool).
 
+TestHashServer.py:
+This script sends messages to hash server and compares server 
+hash result with locally calculated one. Script fails if results 
+are not equal.
+Works only for sha256 hash.
+Script arguments:
+1. Number of messages.
+2. Port.
+3. Minimum message size.
+4. Maximum message size.
