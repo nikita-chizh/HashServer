@@ -22,35 +22,22 @@ void HashProtocol::acceptClient(const int &clientSock){
     buf.reserve(DEFAULT_BUFFER_SIZE);
     _clients.insert({clientSock, std::move(buf)});
 }
-/* There can be 3 variants:
- * 1. testMsg comprises full string to hash
- * 2. testMsg with already accumulated data make up a full string
- * 3. testMsg doesnt have \n so we need to store it's data
- * */
 
-ProcessRes HashProtocol::processChunk(const int &clientSock, const char* buf, const size_t &size){
+std::vector<char> HashProtocol::processChunk(const int &clientSock, const char* buf, const size_t &size){
     auto targetUser = _clients.find(clientSock);
     if(targetUser == _clients.end())
         throw std::runtime_error("ERROR processChunk fd=" + std::to_string(clientSock) + " doesn't exist");
-    auto endPos = std::find(buf, buf + size, '\n');
-    if(endPos == buf + size){ // message end is not in this chunk
-        auto curChunkEnd = targetUser->second.end();
-        targetUser->second.insert(curChunkEnd, buf, buf + size);
-        return ProcessRes{PROCESS_STATUS::NOT_FOUND, {}};
-    }
 
-    if(endPos < buf + size){// end of packet was found
-        auto res = ProcessRes{PROCESS_STATUS::FULL_IN_ONE, {}}; // default case, when fuul msg is in buf
-
-        if(!targetUser->second.empty()){ // if there there was a data from this user
-            auto curChunkEnd = targetUser->second.end();
-            targetUser->second.insert(curChunkEnd, buf, buf + size);
-            res = ProcessRes{PROCESS_STATUS::FOUND_IN_MANY, std::move(targetUser->second)};
+    std::vector<char> res = {};
+    for(size_t i = 0; i < size; ++i){
+        targetUser->second.push_back(buf[i]);
+        if(buf[i] == '\n'){
+            res = std::move(targetUser->second);
+            _clients.erase(clientSock);
+            return res;
         }
-        _clients.erase(clientSock);
-        return res;
     }
-    throw std::runtime_error("ERROR inconsistent processChunk scenario");
+    return res;
 }
 
 void HashProtocol::writeAnswer(const int &clientSock, const char* data, const size_t &size){
@@ -58,7 +45,7 @@ void HashProtocol::writeAnswer(const int &clientSock, const char* data, const si
     if(size == 1)
         hashRes = "\n";
     else
-        hashRes = _cryptoFunc(data, size-1);// without \n
+        hashRes = _cryptoFunc(data, size-1);//result without \n
     writeHashRes(clientSock, hashRes);
     sockClose(clientSock);
 }

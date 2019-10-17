@@ -13,10 +13,6 @@
 //
 #include <ev.h>
 
-enum class PROCESS_STATUS{NOT_FOUND, FULL_IN_ONE, FOUND_IN_MANY};
-using ProcessRes = std::tuple<PROCESS_STATUS, std::vector<char>>;
-
-
 inline bool lessThenZero(int value){
     return value < 0;
 }

@@ -5,7 +5,7 @@
 const int clientSock = 1;
 std::vector<char> testMsg = {'H', 'E', 'L', 'L', 'O', ' ',
                              'T', 'C', 'P', ' ',
-                             'S', 'E', 'R', 'V', 'E', 'R', '\n'};
+                             'S', 'E', 'R', 'V', 'E', 'R'};
 
 std::string hashName = "sha256";
 std::atomic<bool> stop {false};
@@ -14,9 +14,7 @@ ThreadPool threadPool(0, stop);
 TEST(ProcessTesting, clientNotExist) {
     HashProtocol hashProtocol(hashName, threadPool);
     try {
-        PROCESS_STATUS status;
-        std::vector<char> processedData;
-        std::tie(status, processedData) = hashProtocol.processChunk(clientSock, testMsg.data(), testMsg.size());
+        auto res = hashProtocol.processChunk(clientSock, testMsg.data(), testMsg.size());
     }
     catch (const std::runtime_error &error){
         ASSERT_STREQ("ERROR processChunk fd=1 doesn't exist", error.what());
@@ -26,33 +24,41 @@ TEST(ProcessTesting, clientNotExist) {
 TEST(ProcessTesting, testOnePacket) {
     HashProtocol hashProtocol(hashName, threadPool);
     hashProtocol.acceptClient(clientSock);
-    PROCESS_STATUS status;
-    std::vector<char> processedData;
-    std::tie(status, processedData) = hashProtocol.processChunk(clientSock, testMsg.data(), testMsg.size());
-    ASSERT_EQ(status, PROCESS_STATUS::FULL_IN_ONE);
-    ASSERT_EQ(processedData, std::vector<char>());
+    auto onePack = testMsg;
+    onePack.push_back('\n');
+    auto res = hashProtocol.processChunk(clientSock, onePack.data(), onePack.size());
+    ASSERT_EQ(res, onePack);
 }
 
+TEST(ProcessTesting, testOnePacketInAMiddle) {
+    HashProtocol hashProtocol(hashName, threadPool);
+    hashProtocol.acceptClient(clientSock);
+    auto onePack = testMsg;
+    onePack[5] = '\n';
+    std::vector<char> expected = {'H', 'E', 'L', 'L', 'O', '\n'};
+    auto res = hashProtocol.processChunk(clientSock, onePack.data(), onePack.size());
+    ASSERT_EQ(res, expected);
+}
+
+//
 TEST(ProcessTesting, testMultiplePackets) {
     HashProtocol hashProtocol(hashName, threadPool);
     hashProtocol.acceptClient(clientSock);
     // First message
     std::vector<char> firstMsg = {'F', 'H', 'E', 'L', 'L', 'O', ' '};
-    PROCESS_STATUS status;
-    std::vector<char> processedData;
-    std::tie(status, processedData) = hashProtocol.processChunk(clientSock, firstMsg.data(), firstMsg.size());
-    ASSERT_EQ(status, PROCESS_STATUS::NOT_FOUND);
-    ASSERT_EQ(processedData, std::vector<char>());
+    auto res = hashProtocol.processChunk(clientSock, firstMsg.data(), firstMsg.size());
+    ASSERT_EQ(res, std::vector<char>());
     //
-    std::tie(status, processedData) = hashProtocol.processChunk(clientSock, testMsg.data(), testMsg.size());
-    ASSERT_EQ(status, PROCESS_STATUS::FOUND_IN_MANY);
+    auto _testMsg = testMsg;
+    _testMsg.push_back('\n');
+    res = hashProtocol.processChunk(clientSock, _testMsg.data(), _testMsg.size());
     std::vector<char> expectedRes = {'F','H','E','L','L','O',' ',
                                      'H','E','L','L','O',' ',
                                      'T','C','P',' ',
                                      'S','E','R','V','E','R', '\n'};
-    ASSERT_EQ(processedData, expectedRes);
+    ASSERT_EQ(res, expectedRes);
 }
-
+//
 class HASH_TEST :public HashProtocol, public testing::Test
 {
 public:
